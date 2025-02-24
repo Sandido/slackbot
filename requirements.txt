@@ -1,0 +1,7 @@
+slackclient
+python-dotenv
+pydantic
+flask
+slackeventsapi
+tiktoken
+openai
