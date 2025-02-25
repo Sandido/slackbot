@@ -27,8 +27,9 @@ client = AzureOpenAI(
     azure_endpoint=config.endpoint
 )
 
+# currently unused
 # Define your model's maximum token limit
-MODEL_NAME = os.getenv('AOAI_DEPLOYMENT') # "gpt-4o-mini"
+MODEL_NAME = os.getenv('AOAI_DEPLOYMENT') 
 TOKEN_LIMIT = os.getenv('TOKEN_LIMIT') 
 # Initialize tokenizer
 tokenizer = tiktoken.encoding_for_model(MODEL_NAME)
@@ -39,11 +40,12 @@ def count_tokens(text):
 
 
 
-def call_aoai_general_response(query_request):
+def call_aoai_translate(query_request):
     print("!!!!! entered aoai call method")
-    system_msg = AOAIMessage(role="system", content=f"You are a helpful assistant specialized in translating from Japanese to English and vice a versa. \
-                 Whenever you receive english text, translate it to japanese but only use the hiragana and katakana alphabets. When you receive japanese text, translate it to english.")
-    user_msg = AOAIMessage(role="user", content=query_request.user_query)
+    system_msg = AOAIMessage(role="system", content=f"You only translate between english and japanese and apanese to english. \
+                 Whenever you receive english text, translate it exactly to japanese. When you receive japanese text, translate it to english. \
+                 Do not add anything else to the text.")
+    user_msg = AOAIMessage(role="user", content=f"The text to translate is: {query_request.user_query}")
     gpt_request = AOAIRequest(
         model=config.deployment,
         messages=[
