@@ -1,3 +1,6 @@
+# Rewrite:
+Need to update this as the bot has been migrated to an Azure web app!
+
 # slackbot
 for making a slack bot that translates languages
 
