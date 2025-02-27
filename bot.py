@@ -30,7 +30,7 @@ def message(payload):
     #if BOT_ID != user_id :
     #     client.chat_postMessage(channel=channel_id, text="Hello <@{}>! You said {} :tada:".format(user_id, text))
 
-# cehck if bot is running
+# check if bot is running
 @app.route("/")
 def index():
     return "Slack bot is up and running!", 200
