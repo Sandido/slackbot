@@ -19,6 +19,7 @@ client = slack.WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 # client.chat_postMessage(channel='#new-channel', text="Hello World 2!")
 BOT_ID = client.api_call("auth.test")['user_id']
 
+# don't need it, used earlier for testing purposes
 @slack_event_adapter.on('message')
 def message(payload):
     print(payload)
