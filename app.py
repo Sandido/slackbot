@@ -7,7 +7,6 @@ from slackeventsapi import SlackEventAdapter
 from aoai_utils import call_aoai_translate
 from models import QueryRequest
 
-# tutorial stuff
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
