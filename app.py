@@ -26,8 +26,6 @@ def message(payload):
     channel_id = event.get('channel')
     user_id = event.get('user')
     text = event.get('text')
-    #if BOT_ID != user_id :
-    #     client.chat_postMessage(channel=channel_id, text="Hello <@{}>! You said {} :tada:".format(user_id, text))
 
 # check if bot is running
 @app.route("/")
