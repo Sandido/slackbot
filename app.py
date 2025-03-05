@@ -4,7 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, request, Response
 from slackeventsapi import SlackEventAdapter
-from aoai_utils import call_aoai_translate
+from aoai_utils import call_aoai_translate, call_aoai_multilingual_translate
 from models import QueryRequest
 
 # tutorial stuff
@@ -46,57 +46,92 @@ def translate_message():
     # The raw text from the slash command (after /translate ...)
     slash_command_text = data.get('text', '').strip()
 
-    # If the user did not provide any text after /translate
-    if not slash_command_text:
-        # Try to grab the most recent non-bot message from the channel
-        try:
-            # Fetch recent messages
-            response = client.conversations_history(channel=channel_id, limit=5)
-            messages = response.get("messages", [])
+    tokens = slash_command_text.split(maxsplit=2)
 
-            # Look for the first user message that is neither a bot message nor a subtype
-            for msg in messages:
-                # Some messages (like bot messages) can have 'bot_id' or a 'subtype'. These are special messages not from normal users. 
-                if not msg.get("bot_id") and not msg.get("subtype"):
-                    slash_command_text = msg.get("text", "")
-                    break
+    match len(tokens):
+        case 3:
+            target_lang, source_lang, text_to_translate = tokens[0], tokens[1], tokens[2]
 
-        except Exception as e:
-            # Handle API error, e.g. missing permissions or invalid channel
-            print(f"Error fetching conversation history: {e}")
-            slash_command_text = ""
+            # Let the user know we received the request:
+            client.chat_postMessage(
+                channel=channel_id,
+                text=f"Translating from {source_lang} to {target_lang}:\n{text_to_translate}"
+            )
 
-    # If still empty, let the user know 
-    if not slash_command_text:
-        slash_command_text = "No text found to translate."
-        client.chat_postMessage(
-            channel=channel_id, 
-            text=f"Nothing found: {slash_command_text}"
-        )
-        return Response(), 200
+            try:
+                # Call your new AOAI translation
+                result = call_aoai_multilingual_translate(
+                    source_lang=source_lang,
+                    target_lang=target_lang,
+                    text=text_to_translate
+                )
+                # Return the translation
+                client.chat_postMessage(
+                    channel=channel_id,
+                    text=f"**Translation:**\n{result}"
+                )
+                return Response(), 200
 
-    # Log what we’re translating
-    client.chat_postMessage(
-        channel=channel_id, 
-        text=f"Translating: {slash_command_text}"
-    )
+            except Exception as e:
+                print("Error during AOAI call:", str(e))
+                client.chat_postMessage(
+                    channel=channel_id,
+                    text="Sorry, I hit an error: " + str(e)
+                )
+                return Response(status=500)
+        case _:
+            # If the user did not provide any text after /translate
+            if not slash_command_text:
+                # Try to grab the most recent non-bot message from the channel
+                try:
+                    # Fetch recent messages
+                    response = client.conversations_history(channel=channel_id, limit=5)
+                    messages = response.get("messages", [])
 
-    try:
-        # Call Azure OpenAI to get the translation
-        result = call_aoai_translate(
-            QueryRequest(user_query=slash_command_text)
-        )
-        # Return the translation to Slack
-        client.chat_postMessage(
-            channel=channel_id, 
-            text=f"Translation result:\n{result}"
-        )
-        return Response(), 200
+                    # Look for the first user message that is neither a bot message nor a subtype
+                    for msg in messages:
+                        # Some messages (like bot messages) can have 'bot_id' or a 'subtype'. These are special messages not from normal users. 
+                        if not msg.get("bot_id") and not msg.get("subtype"):
+                            slash_command_text = msg.get("text", "")
+                            break
 
-    except Exception as e:
-        print("Error during AOAI call:", str(e))
-        client.chat_postMessage(channel=channel_id, text="Sorry, I hit an error: " + str(e))
-        return Response(status=500)
+                except Exception as e:
+                    # Handle API error, e.g. missing permissions or invalid channel
+                    print(f"Error fetching conversation history: {e}")
+                    slash_command_text = ""
+
+            # If still empty, let the user know 
+            if not slash_command_text:
+                slash_command_text = "No text found to translate."
+                client.chat_postMessage(
+                    channel=channel_id, 
+                    text=f"Nothing found: {slash_command_text}"
+                )
+                return Response(), 200
+
+            # Log what we’re translating
+            client.chat_postMessage(
+                channel=channel_id, 
+                text=f"Translating: {slash_command_text}"
+            )
+
+            try:
+                # Call Azure OpenAI to get the translation
+                result = call_aoai_translate(
+                    QueryRequest(user_query=slash_command_text)
+                )
+                # Return the translation to Slack
+                client.chat_postMessage(
+                    channel=channel_id, 
+                    text=f"Translation result:\n{result}"
+                )
+                return Response(), 200
+
+            except Exception as e:
+                print("Error during AOAI call:", str(e))
+                client.chat_postMessage(channel=channel_id, text="Sorry, I hit an error: " + str(e))
+                return Response(status=500)
+
         
 
 if __name__ == "__main__":

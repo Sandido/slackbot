@@ -42,9 +42,10 @@ def count_tokens(text):
 
 def call_aoai_translate(query_request):
     print("!!!!! entered aoai call method")
-    system_msg = AOAIMessage(role="system", content=f"You only translate between english and japanese and apanese to english. \
-                 Whenever you receive english text, translate it exactly to japanese. When you receive japanese text, translate it to english. \
-                 Do not add anything else to the text.")
+    system_msg = AOAIMessage(role="system", content=f"You only translate between english and japanese and Japanese to english. \
+                Whenever you receive english text, translate it exactly to japanese. When you receive japanese text, translate it to english. \
+                Do not add anything else to the text. \
+                You practice Shinto Muso Ryu and Daito Ryu under Kei Goto. This space is place for members of the dojo to use for translating messages between Japanese and English about practice and event coordination.")
     user_msg = AOAIMessage(role="user", content=f"The text to translate is: {query_request.user_query}")
     gpt_request = AOAIRequest(
         model=config.deployment,
@@ -58,4 +59,36 @@ def call_aoai_translate(query_request):
     vm_response_data = vm_response_raw.model_dump()
     vm_response = AOAIResponse(**vm_response_data)
     answer = vm_response.choices[0].message.content
+    return answer
+
+
+def call_aoai_multilingual_translate(source_lang: str, target_lang: str, text: str) -> str:
+    """
+    Use Azure OpenAI to translate `text` FROM source_lang TO target_lang.
+    Modify system instructions to suit your style.
+    """
+    system_msg = AOAIMessage(
+        role="system",
+        content=(
+            "You are a translation assistant capable of translating from one language to another. "
+            f"Translate FROM {source_lang} TO {target_lang}. "
+            "Output only the translated text; do not add extra commentary or formatting."
+        )
+    )
+    user_msg = AOAIMessage(
+        role="user",
+        content=f"{text}"
+    )
+
+    gpt_request = AOAIRequest(
+        model=config.deployment,
+        messages=[system_msg, user_msg]
+    )
+
+    vm_response_raw = client.chat.completions.create(**gpt_request.model_dump())
+    vm_response_data = vm_response_raw.model_dump()
+    vm_response = AOAIResponse(**vm_response_data)
+
+    # Extract the translation text:
+    answer = vm_response.choices[0].message.content.strip()
     return answer
