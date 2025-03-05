@@ -5,7 +5,7 @@ This code lives on an Azure Web App that listens for the API calls from Slack th
 Dev Time = 3 hours to initial release. First time using Slack API and Azure Web Apps.<br>
 
 ## Iterative features post release:
-1. Any language input using '/translate from_language to_language text' format. Dev Time = 0.5 hours.<br>
+1. Any language input using '/translate from_language to_language text' format. <br> Dev Time = 0.5 hours.<br>
 <br>
 
 # Local Testing:
