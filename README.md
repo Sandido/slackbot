@@ -13,7 +13,7 @@ testenv\Scripts\activate<br>
 # Setup
 pip install -r requirements.txt<br>
 
-ngrok needs to be running via <br>
+ngrok needs to be running in a separate terminal via <br>
 'ngrok http ####' <br>
 '####' being whatever port you have the app running on in the app code. The value in the app's main function needs to be updated to match this.<br>
 Grab the url redirect value.<br>
