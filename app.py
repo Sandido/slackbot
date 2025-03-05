@@ -50,7 +50,7 @@ def translate_message():
 
     match len(tokens):
         case 3:
-            target_lang, source_lang, text_to_translate = tokens[0], tokens[1], tokens[2]
+            source_lang, target_lang, text_to_translate = tokens[0], tokens[1], tokens[2]
 
             # Let the user know we received the request:
             client.chat_postMessage(
