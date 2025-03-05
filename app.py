@@ -66,7 +66,7 @@ def translate_message():
             print(f"Error fetching conversation history: {e}")
             slash_command_text = ""
 
-    # If still empty, let the user know or set a default
+    # If still empty, let the user know 
     if not slash_command_text:
         slash_command_text = "No text found to translate."
         client.chat_postMessage(
@@ -100,4 +100,4 @@ def translate_message():
         
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=5000)
