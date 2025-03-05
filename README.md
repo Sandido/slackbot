@@ -5,7 +5,7 @@ This code lives on an Azure Web App that listens for the API calls from Slack th
 Dev Time = 3 hours to initial release. First time using Slack API and Azure Web Apps.<br>
 Iterative Dev Time = 0 so far.<br>
 <br>
-##Local Testing:
+## Local Testing:
 If you want to run this code locally, you will need some extra setup.<br> 
 # Run venv
 testenv\Scripts\activate<br>
