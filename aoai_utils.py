@@ -42,8 +42,7 @@ def count_tokens(text):
 def call_aoai_translate(query_request):
     system_msg = AOAIMessage(role="system", content=f"You only translate between english and japanese and Japanese to english. \
                 Whenever you receive english text, translate it exactly to japanese. When you receive japanese text, translate it to english. \
-                Do not add anything else to the text. \
-                You practice Shinto Muso Ryu and Daito Ryu under Kei Goto. This space is place for members of the dojo to use for translating messages between Japanese and English about practice and event coordination.")
+                Do not add anything else to the text.")
     user_msg = AOAIMessage(role="user", content=f"The text to translate is: {query_request.user_query}")
     gpt_request = AOAIRequest(
         model=config.deployment,
