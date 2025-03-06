@@ -60,6 +60,21 @@ def verify_slack_signature(signing_secret):
 def index():
     return "Slack bot is up and running!", 200
 
+
+RECOGNIZED_LANGS = {
+    "english",    
+    "japanese",    
+    "spanish",    
+    "french",    
+    "german",
+    "italian",
+    "korean",
+    "dutch",
+    "portuguese",
+    "russian",
+    "hebrew"
+}
+
 def handle_two_language_request(channel_id: str, source_lang: str, target_lang: str, text_to_translate: str) -> Response:
     """
     Called when the user passes exactly 3 tokens after /translate:
@@ -150,10 +165,6 @@ def handle_default_request(channel_id: str, slash_command_text: str) -> Response
 @app.route('/translate-message', methods=['POST'])
 @slack_signature_required
 def translate_message():
-    # Verify Slack signature
-    # print("about to verify slack signature")
-    # if not verify_slack_signature(os.environ['SIGNING_SECRET']):
-    #    return Response("Invalid Slack signature", status=403)
     
     data = request.form
     user_id = data.get('user_id')
@@ -164,8 +175,20 @@ def translate_message():
 
     match len(tokens):
         case 3:
-            source_lang, target_lang, text_to_translate = tokens
-            return handle_two_language_request(channel_id, source_lang, target_lang, text_to_translate)
+            # Check if tokens[0] and tokens[1] are valid language codes
+            maybe_source = tokens[0].lower()
+            maybe_target = tokens[1].lower()
+            the_rest = tokens[2]
+
+            if maybe_source in RECOGNIZED_LANGS and maybe_target in RECOGNIZED_LANGS:
+                return handle_two_language_request(
+                    channel_id,
+                    source_lang=maybe_source,
+                    target_lang=maybe_target,
+                    text_to_translate=the_rest
+                )
+            else:
+                return handle_default_request(channel_id, slash_command_text)
         case _:
             return handle_default_request(channel_id, slash_command_text)
 
