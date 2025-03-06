@@ -5,8 +5,8 @@ This code lives on an Azure Web App that listens for the API calls from Slack th
 Dev Time = 3 hours to initial release. First time using Slack API and Azure Web Apps.<br>
 
 ## Iterative features post release:
-1. Multiple language input from a list of valid languages using '/translate from_language to_language text' format. <br> Dev Time = 0.5 hours.<br>
-2. Secure signature for the translate-message with a wrapper, ensuring it accepts just the Slack bot I have setup. Required a bit of learning and testing. <br> Dev Time = 1 hour.<br>
+1. Multiple language input from a list of valid languages using '/translate from_language to_language text' format. <br> Dev Time = 1 hours.<br>
+2. Secure signature for the translate-message with a wrapper, ensuring it accepts just the Slack bot I have setup. Required a bit of learning and testing. <br> Dev Time = 0.5 hours.<br>
 
 # Local Testing:
 If you want to run this code locally, you will need some extra setup.<br> 
