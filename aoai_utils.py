@@ -39,9 +39,7 @@ def count_tokens(text):
     return len(tokenizer.encode(text))
 
 
-
 def call_aoai_translate(query_request):
-    print("!!!!! entered aoai call method")
     system_msg = AOAIMessage(role="system", content=f"You only translate between english and japanese and Japanese to english. \
                 Whenever you receive english text, translate it exactly to japanese. When you receive japanese text, translate it to english. \
                 Do not add anything else to the text. \
