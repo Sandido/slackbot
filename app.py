@@ -31,7 +31,6 @@ def slack_signature_required(f):
     return wrapper
 
 def verify_slack_signature(signing_secret):
-    print("start verification slack siganture")
     slack_signature = request.headers.get('X-Slack-Signature', '')
     slack_timestamp = request.headers.get('X-Slack-Request-Timestamp', '')
 
@@ -49,8 +48,6 @@ def verify_slack_signature(signing_secret):
         hashlib.sha256
     ).hexdigest()
 
-    print("end verification slack siganture")
-
     # 4) Compare signatures safely
     return hmac.compare_digest(my_signature, slack_signature)
 
@@ -60,7 +57,7 @@ def verify_slack_signature(signing_secret):
 def index():
     return "Slack bot is up and running!", 200
 
-
+# recognized languages to ensure each scenario works. 
 RECOGNIZED_LANGS = {
     "english",    
     "japanese",    
