@@ -10,6 +10,7 @@ from models import QueryRequest
 import hmac
 import hashlib
 import time
+from functools import wraps
 
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
@@ -20,6 +21,14 @@ slack_event_adapter = SlackEventAdapter(os.environ['SIGNING_SECRET'], '/slack/ev
 client = slack.WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 BOT_ID = client.api_call("auth.test")['user_id']
 
+
+def slack_signature_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not verify_slack_signature(os.environ['SIGNING_SECRET']):
+            return Response("Invalid Slack signature", status=403)
+        return f(*args, **kwargs)
+    return wrapper
 
 def verify_slack_signature(signing_secret):
     print("start verification slack siganture")
@@ -139,11 +148,12 @@ def handle_default_request(channel_id: str, slash_command_text: str) -> Response
 
 
 @app.route('/translate-message', methods=['POST'])
+@slack_signature_required
 def translate_message():
     # Verify Slack signature
-    print("about to verify slack signature")
-    if not verify_slack_signature(os.environ['SIGNING_SECRET']):
-        return Response("Invalid Slack signature", status=403)
+    # print("about to verify slack signature")
+    # if not verify_slack_signature(os.environ['SIGNING_SECRET']):
+    #    return Response("Invalid Slack signature", status=403)
     
     data = request.form
     user_id = data.get('user_id')
