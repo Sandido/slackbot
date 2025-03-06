@@ -7,6 +7,10 @@ from slackeventsapi import SlackEventAdapter
 from aoai_utils import call_aoai_translate, call_aoai_multilingual_translate
 from models import QueryRequest
 
+import hmac
+import hashlib
+import time
+
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
@@ -15,6 +19,32 @@ slack_event_adapter = SlackEventAdapter(os.environ['SIGNING_SECRET'], '/slack/ev
 
 client = slack.WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 BOT_ID = client.api_call("auth.test")['user_id']
+
+
+def verify_slack_signature(signing_secret):
+    print("start verification slack siganture")
+    slack_signature = request.headers.get('X-Slack-Signature', '')
+    slack_timestamp = request.headers.get('X-Slack-Request-Timestamp', '')
+
+    # 1) Guard against replay attacks by verifying timestamp is recent (e.g. within 5 minutes)
+    if abs(time.time() - float(slack_timestamp)) > 60 * 5:
+        return False
+
+    # 2) Create the signature base string as prescribed by Slack
+    sig_basestring = f"v0:{slack_timestamp}:{request.get_data(as_text=True)}"
+
+    # 3) Compute the expected signature
+    my_signature = 'v0=' + hmac.new(
+        signing_secret.encode('utf-8'),
+        sig_basestring.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+
+    print("end verification slack siganture")
+
+    # 4) Compare signatures safely
+    return hmac.compare_digest(my_signature, slack_signature)
+
 
 # check if bot is running
 @app.route("/")
@@ -110,6 +140,11 @@ def handle_default_request(channel_id: str, slash_command_text: str) -> Response
 
 @app.route('/translate-message', methods=['POST'])
 def translate_message():
+    # Verify Slack signature
+    print("about to verify slack signature")
+    if not verify_slack_signature(os.environ['SIGNING_SECRET']):
+        return Response("Invalid Slack signature", status=403)
+    
     data = request.form
     user_id = data.get('user_id')
     channel_id = data.get('channel_id')
