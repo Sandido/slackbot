@@ -6,5 +6,5 @@ slackeventsapi
 tiktoken
 openai
 hmac
-hashlib
+# hashlib
 functools
