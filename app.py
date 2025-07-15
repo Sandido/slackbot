@@ -12,6 +12,7 @@ import hashlib
 import time
 from functools import wraps
 
+# Setup
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
@@ -21,7 +22,22 @@ slack_event_adapter = SlackEventAdapter(os.environ['SIGNING_SECRET'], '/slack/ev
 client = slack.WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 BOT_ID = client.api_call("auth.test")['user_id']
 
+# recognized languages to ensure each scenario works. 
+RECOGNIZED_LANGS = {
+    "english",    
+    "japanese",    
+    "spanish",    
+    "french",    
+    "german",
+    "italian",
+    "korean",
+    "dutch",
+    "portuguese",
+    "russian",
+    "hebrew"
+}
 
+# Authentication logic
 def slack_signature_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -52,25 +68,11 @@ def verify_slack_signature(signing_secret):
     return hmac.compare_digest(my_signature, slack_signature)
 
 
-# check if bot is running
+# Business Logic below:
+# check if bot is running, safety check
 @app.route("/")
 def index():
     return "Slack bot is up and running!", 200
-
-# recognized languages to ensure each scenario works. 
-RECOGNIZED_LANGS = {
-    "english",    
-    "japanese",    
-    "spanish",    
-    "french",    
-    "german",
-    "italian",
-    "korean",
-    "dutch",
-    "portuguese",
-    "russian",
-    "hebrew"
-}
 
 def handle_two_language_request(channel_id: str, source_lang: str, target_lang: str, text_to_translate: str) -> Response:
     """
@@ -86,13 +88,11 @@ def handle_two_language_request(channel_id: str, source_lang: str, target_lang: 
     )
 
     try:
-        # Call the multilingual AOAI translation
         result = call_aoai_multilingual_translate(
             source_lang=source_lang,
             target_lang=target_lang,
             text=text_to_translate
         )
-        # Return the translation to Slack
         client.chat_postMessage(
             channel=channel_id,
             text=f"**Translation:**\n{result}"
@@ -107,14 +107,14 @@ def handle_two_language_request(channel_id: str, source_lang: str, target_lang: 
         )
         return Response(status=500)
 
-
+# Original default behavior, translating to or from japanese if no language is provided. 
 def handle_default_request(channel_id: str, slash_command_text: str) -> Response:
     """
     Called when the user does not provide exactly 3 tokens. (0, 1, or 2 tokens)
     - If `slash_command_text` is empty, it attempts to pull the last user message from the channel.
     - Otherwise, it calls the original call_aoai_translate for English/Japanese only.
     """
-    # If the user did not provide any text
+    # If the user did not provide any text, try to find text to translate. 
     if not slash_command_text:
         # Try to grab the most recent non-bot message from the channel
         try:
@@ -158,7 +158,7 @@ def handle_default_request(channel_id: str, slash_command_text: str) -> Response
         client.chat_postMessage(channel=channel_id, text="Sorry, I hit an error: " + str(e))
         return Response(status=500)
 
-
+# Latest logic, when a message and langauges are provided. 
 @app.route('/translate-message', methods=['POST'])
 @slack_signature_required
 def translate_message():
@@ -189,8 +189,7 @@ def translate_message():
         case _:
             return handle_default_request(channel_id, slash_command_text)
 
-        
-
+# Main calls to ensure this works with the Azure App setup. 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
 
