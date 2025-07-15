@@ -12,12 +12,20 @@ import hashlib
 import time
 from functools import wraps
 
+from config import (
+    SLACK_EVENTS_PATH,
+    REQUEST_TTL_SECONDS,
+    HISTORY_LOOKBACK,
+    HTTP_PORT,
+    RECOGNIZED_LANGS,
+)
+
 # Setup
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
 app = Flask(__name__)
-slack_event_adapter = SlackEventAdapter(os.environ['SIGNING_SECRET'], '/slack/events', app)
+slack_event_adapter = SlackEventAdapter(os.environ['SIGNING_SECRET'], SLACK_EVENTS_PATH, app)
 
 client = slack.WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 BOT_ID = client.api_call("auth.test")['user_id']
@@ -51,10 +59,10 @@ def verify_slack_signature(signing_secret):
     slack_timestamp = request.headers.get('X-Slack-Request-Timestamp', '')
 
     # 1) Guard against replay attacks by verifying timestamp is recent (e.g. within 5 minutes)
-    if abs(time.time() - float(slack_timestamp)) > 60 * 5:
+    if abs(time.time() - float(slack_timestamp)) > REQUEST_TTL_SECONDS:
         return False
 
-    # 2) Create the signature base string as prescribed by Slack
+    # 2) Create the signature base string as prescribed by Slack's protocol
     sig_basestring = f"v0:{slack_timestamp}:{request.get_data(as_text=True)}"
 
     # 3) Compute the expected signature
@@ -64,7 +72,7 @@ def verify_slack_signature(signing_secret):
         hashlib.sha256
     ).hexdigest()
 
-    # 4) Compare signatures safely
+    # 4) Compare signatures are matching
     return hmac.compare_digest(my_signature, slack_signature)
 
 
@@ -118,7 +126,7 @@ def handle_default_request(channel_id: str, slash_command_text: str) -> Response
     if not slash_command_text:
         # Try to grab the most recent non-bot message from the channel
         try:
-            response = client.conversations_history(channel=channel_id, limit=5)
+            response = client.conversations_history(channel=channel_id, limit=HISTORY_LOOKBACK)
             messages = response.get("messages", [])
 
             for msg in messages:
@@ -191,7 +199,7 @@ def translate_message():
 
 # Main calls to ensure this works with the Azure App setup. 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=HTTP_PORT)
 
 # don't need below, used earlier for testing purposes, keeping for reference in case I want to expand this 
 # in a particular channel just for the translate bot where it replies more often.
